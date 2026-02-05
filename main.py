@@ -36,14 +36,3 @@ async def test():
 @app.post("/query")
 def query(question: str):
     return {"answer": run_rag(pipe, question)}
-
-
-if __name__ == "__main__":
-
-    
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=3000,
-        reload=True
-    )
