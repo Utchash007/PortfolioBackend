@@ -3,7 +3,8 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from openai import RateLimitError
 from pydantic import BaseModel, Field
 
 from DBQuery import Query
@@ -72,7 +73,10 @@ async def test():
 
 @app.post("/query", response_model=QueryResponse)
 async def query(req: QueryRequest, request: Request):
-    answer = await asyncio.to_thread(run_rag, request.app.state.pipe, req.question)
+    try:
+        answer = await asyncio.to_thread(run_rag, request.app.state.pipe, req.question)
+    except RateLimitError:
+        raise HTTPException(status_code=429, detail="LLM rate limit reached. Please try again later.")
     return QueryResponse(answer=answer)
 
 
