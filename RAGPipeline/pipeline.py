@@ -23,4 +23,6 @@ def build_pipeline():
     pipe.connect("TextEmbedder.embedding", "Retriever.query_embedding")
     pipe.connect("Retriever", "PromptBuilder.documents")
     pipe.connect("PromptBuilder", "Generator")
+
+    pipe.warm_up()
     return pipe

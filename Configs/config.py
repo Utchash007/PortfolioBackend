@@ -12,6 +12,7 @@ class ConfigService:
     __FULL_TEXT_SEARCH_INDEX = os.getenv("FULL_TEXT_SEARCH_INDEX")
     __API_BASE_URL = os.getenv("API_BASE_URL")
     __MODEL = os.getenv("MODEL")
+    __EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 
     @classmethod
     def get_openrouter_api_key(cls):
@@ -44,3 +45,7 @@ class ConfigService:
     @classmethod
     def get_model(cls):
         return cls.__MODEL
+
+    @classmethod
+    def get_embedding_model(cls):
+        return cls.__EMBEDDING_MODEL
