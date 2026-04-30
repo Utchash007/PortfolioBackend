@@ -1,0 +1,113 @@
+components:
+  ChatGenerator:
+    init_parameters:
+      api_base_url: https://openrouter.ai/api/v1
+      api_key:
+        env_vars:
+        - OPENROUTER_API_KEY
+        strict: true
+        type: env_var
+      generation_kwargs: {}
+      http_client_kwargs: null
+      max_retries: null
+      model: liquid/lfm-2.5-1.2b-instruct:free
+      organization: null
+      streaming_callback: null
+      timeout: null
+      tools: null
+      tools_strict: false
+    type: haystack.components.generators.chat.openai.OpenAIChatGenerator
+  ChatPromptBuilder:
+    init_parameters:
+      required_variables:
+      - documents
+      - question
+      template:
+      - content:
+        - text: "You are a software engineer. Answer every question in first person\
+            \ as if you are that person. Use ONLY the information from the context\
+            \ provided \u2014 do not invent or assume anything not stated there. If\
+            \ the answer is not in the context, say you don't have that information."
+        meta: {}
+        name: null
+        role: system
+      - content:
+        - text: "\nContext:\n{% for document in documents %}\n    {{ document.content\
+            \ }}\n{% endfor %}\n\nQuestion: {{ question }}\n"
+        meta: {}
+        name: null
+        role: user
+      variables: null
+    type: haystack.components.builders.chat_prompt_builder.ChatPromptBuilder
+  DocumentJoiner:
+    init_parameters:
+      join_mode: reciprocal_rank_fusion
+      sort_by_score: true
+      top_k: null
+      weights: null
+    type: haystack.components.joiners.document_joiner.DocumentJoiner
+  FullTextRetriever:
+    init_parameters:
+      document_store:
+        init_parameters:
+          collection_name: RAG
+          database_name: RAGDB
+          full_text_search_index: default
+          mongo_connection_string:
+            env_vars:
+            - MONGO_URI
+            strict: true
+            type: env_var
+          vector_search_index: vector_index
+        type: haystack_integrations.document_stores.mongodb_atlas.document_store.MongoDBAtlasDocumentStore
+      filter_policy: replace
+      filters: {}
+      top_k: 5
+    type: haystack_integrations.components.retrievers.mongodb_atlas.full_text_retriever.MongoDBAtlasFullTextRetriever
+  TextEmbedder:
+    init_parameters:
+      api_params:
+        model: sentence-transformers/all-MiniLM-L6-v2
+      api_type: serverless_inference_api
+      normalize: false
+      prefix: ''
+      suffix: ''
+      token:
+        env_vars:
+        - HF_EMBED_TOKEN
+        strict: true
+        type: env_var
+      truncate: true
+    type: haystack.components.embedders.hugging_face_api_text_embedder.HuggingFaceAPITextEmbedder
+  VectorRetriever:
+    init_parameters:
+      document_store:
+        init_parameters:
+          collection_name: RAG
+          database_name: RAGDB
+          full_text_search_index: default
+          mongo_connection_string:
+            env_vars:
+            - MONGO_URI
+            strict: true
+            type: env_var
+          vector_search_index: vector_index
+        type: haystack_integrations.document_stores.mongodb_atlas.document_store.MongoDBAtlasDocumentStore
+      filter_policy: replace
+      filters: {}
+      top_k: 5
+    type: haystack_integrations.components.retrievers.mongodb_atlas.embedding_retriever.MongoDBAtlasEmbeddingRetriever
+connection_type_validation: true
+connections:
+- receiver: VectorRetriever.query_embedding
+  sender: TextEmbedder.embedding
+- receiver: DocumentJoiner.documents
+  sender: VectorRetriever.documents
+- receiver: DocumentJoiner.documents
+  sender: FullTextRetriever.documents
+- receiver: ChatPromptBuilder.documents
+  sender: DocumentJoiner.documents
+- receiver: ChatGenerator.messages
+  sender: ChatPromptBuilder.prompt
+max_runs_per_component: 100
+metadata: {}

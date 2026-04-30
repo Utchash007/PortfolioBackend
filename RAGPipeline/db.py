@@ -3,7 +3,7 @@ from haystack_integrations.document_stores.mongodb_atlas import MongoDBAtlasDocu
 from Configs.config import ConfigService
 
 document_store = MongoDBAtlasDocumentStore(
-    mongo_connection_string=Secret.from_token(ConfigService.get_mongo_uri()),
+    mongo_connection_string=Secret.from_env_var("MONGO_URI"),
     database_name=ConfigService.get_db_name(),
     collection_name=ConfigService.get_collection_name(),
     vector_search_index=ConfigService.get_vector_index(),

@@ -8,10 +8,7 @@ WORKDIR /build
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip wheel --no-cache-dir --wheel-dir /wheels \
-        --index-url https://download.pytorch.org/whl/cpu \
-        --extra-index-url https://pypi.org/simple \
-        -r requirements.txt
+    pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
 # ── runtime ──────────────────────────────────────────────
 FROM python:3.12-slim
@@ -24,8 +21,7 @@ WORKDIR /app
 
 COPY --from=builder /wheels /tmp/wheels
 RUN pip install --no-cache-dir --no-deps /tmp/wheels/* && \
-    rm -rf /tmp/wheels /root/.cache && \
-    pip list | grep -iE "nvidia|cuda|triton|nccl" && echo "ERROR: CUDA packages found!" && exit 1 || true
+    rm -rf /tmp/wheels /root/.cache
 
 COPY Files/ Files/
 COPY Configs/ Configs/

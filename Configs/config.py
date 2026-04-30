@@ -13,6 +13,7 @@ class ConfigService:
     __API_BASE_URL = os.getenv("API_BASE_URL")
     __MODEL = os.getenv("MODEL")
     __EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    __HF_EMBED_TOKEN = os.getenv("HF_EMBED_TOKEN")
 
     @classmethod
     def get_openrouter_api_key(cls):
@@ -49,3 +50,7 @@ class ConfigService:
     @classmethod
     def get_embedding_model(cls):
         return cls.__EMBEDDING_MODEL
+
+    @classmethod
+    def get_hf_embed_token(cls):
+        return cls.__HF_EMBED_TOKEN

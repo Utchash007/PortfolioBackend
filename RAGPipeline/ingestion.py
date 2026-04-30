@@ -1,26 +1,36 @@
-from haystack import Document
-from haystack.components.preprocessors import DocumentSplitter, DocumentCleaner
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder
+from haystack import Pipeline
 from haystack.components.converters import PyPDFToDocument
+from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
+from haystack.components.embedders import HuggingFaceAPIDocumentEmbedder
+from haystack.utils import Secret
+from haystack.components.writers import DocumentWriter
 from Configs.config import ConfigService
-from .db import document_store
+from RAGPipeline.db import document_store
 
-def ingest_documents(file_path: str):
-    converter = PyPDFToDocument()
-    conversion_result = converter.run(sources=[file_path])
-    docs = conversion_result["documents"]
 
-    cleaner = DocumentCleaner()
-    cleaned_result = cleaner.run(documents=docs)
-    cleaned_docs = cleaned_result["documents"]
+def ingest_documents(file_path: str) -> None:
+    pipe = Pipeline()
 
-    splitter = DocumentSplitter(split_by="word", split_length=200, split_overlap=20)
-    split_result = splitter.run(documents=cleaned_docs)
-    split_docs = split_result["documents"]
+    pipe.add_component("Converter", PyPDFToDocument())
+    pipe.add_component("Cleaner", DocumentCleaner())
+    pipe.add_component(
+        "Splitter",
+        DocumentSplitter(split_by="word", split_length=200, split_overlap=20),
+    )
+    pipe.add_component(
+        "Embedder",
+        HuggingFaceAPIDocumentEmbedder(
+            api_type="serverless_inference_api",
+            api_params={"model": ConfigService.get_embedding_model()},
+            token=Secret.from_token(ConfigService.get_hf_embed_token()),
+        ),
+    )
+    pipe.add_component("Writer", DocumentWriter(document_store=document_store))
 
-    doc_embedder = SentenceTransformersDocumentEmbedder(model=ConfigService.get_embedding_model())
-    doc_embedder.warm_up()
-    embedding_result = doc_embedder.run(documents=split_docs)
-    docs_with_embeddings = embedding_result["documents"]
+    pipe.connect("Converter", "Cleaner")
+    pipe.connect("Cleaner", "Splitter")
+    pipe.connect("Splitter", "Embedder")
+    pipe.connect("Embedder", "Writer")
 
-    document_store.write_documents(docs_with_embeddings)
+    pipe.warm_up()
+    pipe.run({"Converter": {"sources": [file_path]}})
