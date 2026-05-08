@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from openai import RateLimitError
 from pydantic import BaseModel, Field
 
@@ -11,6 +12,7 @@ from DBQuery import Query
 from DBQuery.mongoConfig import init
 from RAGPipeline import pipeline, Checker
 from App.RAGservice import run_rag
+from Configs.config import ConfigService
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,6 +50,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ConfigService.get_cors_allow_origins(),
+    allow_methods=["POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 
 
 @app.get("/")

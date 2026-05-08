@@ -14,6 +14,7 @@ class ConfigService:
     __MODEL = os.getenv("MODEL")
     __EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
     __HF_EMBED_TOKEN = os.getenv("HF_EMBED_TOKEN")
+    __CORS_ALLOW_ORIGINS = os.getenv("CORS_ALLOW_ORIGINS", "")
 
     @classmethod
     def get_openrouter_api_key(cls):
@@ -54,3 +55,9 @@ class ConfigService:
     @classmethod
     def get_hf_embed_token(cls):
         return cls.__HF_EMBED_TOKEN
+
+    @classmethod
+    def get_cors_allow_origins(cls):
+        if not cls.__CORS_ALLOW_ORIGINS:
+            return []
+        return [origin.strip() for origin in cls.__CORS_ALLOW_ORIGINS.split(",") if origin.strip()]
