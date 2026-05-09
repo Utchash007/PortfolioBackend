@@ -9,6 +9,9 @@ from RAGPipeline.db import document_store
 
 
 def ingest_documents(file_path: str) -> None:
+    # Clear the collection before starting the new ingestion
+    document_store._collection.delete_many({})
+
     pipe = Pipeline()
 
     pipe.add_component("Converter", PyPDFToDocument())
