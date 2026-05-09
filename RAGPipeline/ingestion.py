@@ -10,7 +10,16 @@ from RAGPipeline.db import document_store
 
 def ingest_documents(file_path: str) -> None:
     # Clear the collection before starting the new ingestion
-    document_store._collection.delete_many({})
+    try:
+        document_store.delete_all_documents()
+    except Exception as e:
+        # Fallback for older versions or initialization issues
+        print(f"Note: delete_all_documents failed ({e}), attempting fallback...")
+        try:
+            # Try filter-based deletion if supported
+            document_store.delete_documents(filters={})
+        except Exception:
+            pass
 
     pipe = Pipeline()
 

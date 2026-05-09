@@ -18,15 +18,17 @@ def _file_hash(path: str) -> str:
 
 
 async def checkRAG():
+    print("========entering checkRAG========")
     current_hash = _file_hash(RESUME_PATH)
     latest = await Query.getLatest()
 
     if latest and latest.state == 1 and latest.file_hash == current_hash:
+        print("========exit checkRAG (no changes)========")
         return
 
     if latest and latest.file_hash != current_hash:
         logger.info("Resume file changed — re-ingesting")
-
+    print("========checkRAG (file changed)========")
     try:
         ingest_documents(RESUME_PATH)
         logger.info("Ingestion complete")
